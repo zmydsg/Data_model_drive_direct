@@ -1,0 +1,202 @@
+import torch
+from utils import *
+from model import GCN, PrimalDualModel
+import os
+import matplotlib.pyplot as plt
+import time
+import warnings
+from torch_geometric.utils import is_undirected
+from tempargs import args
+import random
+from torch.utils.tensorboard import SummaryWriter
+warnings.filterwarnings('ignore')
+from torch.utils.data import  TensorDataset
+
+# 初始化参数
+epochs = args.epochs
+seed = args.seed
+NumK = args.NumK
+dropout = args.dropout
+learning_rate = args.learning_rate
+learning_rate2 = args.learning_rate2
+learning_rate3 = args.learning_rate3
+
+Bounds = args.Bounds
+rate = args.rate
+bandwidth = args.bandwidth
+numofbyte = args.numofbyte
+equal_flag = args.equal_flag
+device = args.device
+in_size = args.in_size
+out_size = args.out_size
+inter = args.inter
+# model_name = args.model_name
+# PDB = args.PDB
+# dual element update stepsize
+update_Step = {"pout": learning_rate2, "power": learning_rate3}
+
+decay_epoch = 100
+
+# get data_path
+# project_path = os.getcwd()
+project_path = ".\\"
+data_path = project_path + 'dataset\\'
+train_data_name = data_path + f'tr_inverse_direct_Numk={NumK}.h5'
+test_data_name = data_path + f'te_inverse_direct_NumK={NumK}.h5'
+print_save_path = project_path + 'print_record\\'
+photo_save_path = project_path+'photo\\'
+model_save_path =project_path+'model\\'              # 保存模型的路径
+val_path = project_path+'vallog\\'
+
+# 判断控制台输出存取的目录是否存在
+generateFilePath(print_save_path)
+# 判断保存对应模型图片的是否存在
+generateFilePath(photo_save_path)
+# 判断保存模型数据的路径是否存在
+generateFilePath(model_save_path)
+# generate_model_path = lambda NumK, PDB, rate: project_path+f"\\model\\direct\\times_{NumK}_maxPower_{PDB}DB_rate{rate}\\"
+####
+
+# tensorboard 记录吞吐量变化
+writer = SummaryWriter("tensorboardLOG")
+model_name_list = ["HARQ"]
+PDBS  = [15]
+def train():
+    for model_name in model_name_list:
+        for PDB in PDBS:
+            #初始化固定随机种子
+            setup_seed(seed)
+
+            # 生成存储控制台输出的文件路径
+            logsrecord_name = print_save_path + f'{model_name}-PDB={PDB}-Numk={NumK}-'+time.strftime("%Y-%m-%d-%H-%M-%S",
+                                                                            time.localtime()) + '.log'
+            #模型保存路径
+            modelsavepath = model_save_path + f'{model_name}-NumK={NumK}-PDB={PDB}'
+            valpath = val_path + f'{model_name}-NumK={NumK}-PDB={PDB}'
+            # 记录正常的 print 信息
+            sys.stdout = Logger(logsrecord_name)
+            # 记录 traceback 异常信息
+            sys.stderr = Logger(logsrecord_name)
+
+            # model_save_path = generate_model_path(NumK,PDB,rate)
+            # if not os.path.exists(model_save_path):
+            #     os.makedirs(model_save_path)
+
+            bound = torch.log10(torch.tensor([Bounds[PDB]]))
+
+            # data-process
+            X, Y, cinfo = getdata(data_path,PDB, NumK, device=device, equal_flag=equal_flag)
+
+            dataset = TensorDataset(X['tr'] , Y['tr'])
+            dataloader = DataLoader(dataset, batch_size=50, shuffle=True)
+
+
+            valLogs= {}
+            valdata = {
+                'Hx_dir':{'Hx':X['val'], 'edge_index': cinfo['val']['edge_index']},
+                'bounds':bound,'rate':rate,'numofbyte':numofbyte,'bandwidth':bandwidth}
+            
+
+            print(f"\nbounds:{bound}\tdb:{PDB}\tPt_max:{X['tr'][0,-1]}")
+
+            start_time = time.time()
+
+            # init model and paras
+            gcnmodel = GCN(in_size=in_size,
+                           out_size=out_size,
+                           **inter[0],
+                           dropout=dropout,
+                           NumK=NumK,
+                           edge_index=None).to(device)
+
+            model_pd = PrimalDualModel(model_name,
+                                       model=gcnmodel,
+                                       Numk=NumK,
+                                       constraints=['pout', 'power'],
+                                       device=device)
+
+            optimizer = torch.optim.Adam(gcnmodel.parameters(), lr=learning_rate)
+
+            # 动态学习率，调整learning rate大小
+            lr_sch = torch.optim.lr_scheduler.StepLR(optimizer, step_size=100*20, gamma=0.4)
+            l_p_list = []
+            lagr_list = []
+
+            # training
+            for epoch in range(epochs):
+                print("=" * 100)
+                print("=" * 100)
+                print("=" * 100)
+                print(f"\nepoch:{epoch}")
+
+                # epoch_lp = 0
+                for i, (x, _) in enumerate(dataloader):
+                    # print(f"i:{i}")
+                    model_pd.train()
+                    pt = model_pd(Hx_dir={"Hx": x, 'edge_index': cinfo['tr']['edge_index']},
+                                  bounds=bound,
+                                  rate=rate,
+                                  numofbyte=numofbyte,
+                                  bandwidth=bandwidth)
+
+                    optimizer.zero_grad()
+                    model_pd.lagr.backward()
+
+                    torch.nn.utils.clip_grad_norm_(model_pd.parameters(), 3)
+                    optimizer.step()
+                    model_pd.update(update_Step, epoch, i,)
+                    lr_sch.step()
+
+                    # 存取训练中变化
+
+                    # epoch_lp += model_pd.l_p.item()
+                    if not i%20:
+                        print("**" * 20)
+                        print(f"forward func Hx:{x[0:4, :]}\n pt:{pt[0:4, :]}")
+                        l_p_list.append(model_pd.l_p.mean().item())
+                        lagr_list.append(model_pd.lagr.mean().item())
+                        print(f'\ntraining epoch:{epoch}, step:{i}',
+                              "\nmodel_pd.l_p.mean():", model_pd.l_p.mean().item(),
+                              "\nmodel_pd.l_d.mean():", model_pd.l_d.mean().item(),
+                              "\nmodel_pd.lagr.mean():", model_pd.lagr.mean().item(),
+                              "\nmodel_pd.lambdas:", model_pd.lambdas.items(),
+                              "\nmodel_pd.vars:",model_pd.vars.items(),
+                              # "\nmodel_pd.ef:", model_pd.ef.items(),
+                              # "\nmodel_pd.throughput.item()",model_pd.throughput.data,
+                              # "\nmodel_pd.temp_dict:", model_pd.temp_dict,
+                              )
+                    print(f"epoch：{epoch}\t i:{i} \t global-step:{epoch*20+i}\t l-p:{model_pd.l_p.item()}")
+                    writer.add_scalar(tag=f"{model_name}", scalar_value=model_pd.l_p.item(), global_step=epoch*20+i)
+                    writer.add_scalar(tag=f"{model_name}-lagr", scalar_value=model_pd.lagr.item(),global_step=epoch * 20 + i)
+                
+
+    #关闭tensorboard写入
+    # writer.close()
+
+    # equalAllocation(1000, factor, NumK, rate, bound)
+
+    # matplot draw graph
+    # x = np.linspace(start=0,stop=len(l_p_list),num=len(l_p_list))
+    # plt.subplot(1,2,1)
+    # plt.title("{model_name} epoch---delay", color='b')
+    # plt.xlabel("epoch")
+    # plt.ylabel("delay")
+    # plt.plot(x, l_p_list)
+    #
+    # plt.subplot(1,2,2)
+    # plt.title("epoch---Lagr", color='b')
+    # plt.xlabel("epoch")
+    # plt.ylabel("Lagr")
+    # plt.plot(x, lagr_list)
+    #
+    # plt.savefig(photo_save_path+f'//{model_name}-NumK={NumK}-PDB={PDB}-equal_flag={equal_flag}.jpg')
+    # plt.show()
+
+    #保存val验证集的log文件
+    # import pickle
+    # with open(valpath+'power_vallog.pk', 'wb') as f:
+    #     pickle.dump(valLogs, f)
+
+
+if __name__ =="__main__":
+    train()
