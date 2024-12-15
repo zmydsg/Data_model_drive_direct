@@ -20,7 +20,7 @@ train_data_name = data_path + f'tr_inverse_direct_Numk={NumK}.h5'
 val_data_name = data_path +f'val_inverse_direct_Numk={NumK}.h5'
 
 
-
+#非对角元素为factor^(i+j)
 def generate1example(factor,K,x):
     """
     # 产生无向图模型
@@ -42,6 +42,8 @@ def generate1example(factor,K,x):
                 x[i - 1, j - 1] = 1
     return x.reshape(1,-1)
 
+
+#上三角矩阵
 def generate1DirectExample(factor,K,x):
     """
     #产生有向图模型
@@ -56,6 +58,7 @@ def generate1DirectExample(factor,K,x):
 
     return x.reshape(1, -1)
 
+#下三角矩阵
 def generate1InverseDirectExample(factor,K,x):
     """
     #产生有向图模型
@@ -70,6 +73,7 @@ def generate1InverseDirectExample(factor,K,x):
     print(x)
     return x.reshape(1, -1)
 
+#根据指定数量 dataNum 和 seed 随机产生 factor，为每个 factor 生成一个(K,K)矩阵，
 def makedata(dpath, K, dataNum, seed):
     """
     根据输入的factor
@@ -86,7 +90,9 @@ def makedata(dpath, K, dataNum, seed):
             # 产生有向图模型
             factor = factor_list[i]
             x = np.zeros((K, K), dtype=np.float32)
-            x = generate1DirectExample(factor, K, x)
+            #通过 generate1DirectExample 将其转化为输入特征，再加入 factor 值组成（K^2+1）维的输入特征行向量，
+            x = generate1DirectExample(factor, K, x)#
+            #并最终写入到 h5 文件中。
             dset[i, :-1], dset[i, -1] = x, factor
 
         y = x.reshape(K,K)
@@ -157,6 +163,8 @@ def generateDataSet(dataname, dataNum, seed):
 
 if __name__=='__main__':
     
-    factor = 0.55
+    factor = 0.98
     factor_test_data = data_path + f'te_factor={factor}_NumK={NumK}.h5'
-    makefactordata(factor_test_data, K=NumK, factor=factor)
+    # makefactordata(factor_test_data, K=NumK, factor=factor)
+    # generateDataSet(train_data_name, 50, args.train_seed)
+    generateDataSet(val_data_name, 100, args.val_seed)

@@ -1,0 +1,23 @@
+
+bounds:tensor([-2.])	db:15	Pt_max:31.62277603149414
+model init: 
+lambdas:{'pout': tensor([1.], device='cuda:0'), 'power': tensor([1.], device='cuda:0')},
+vars:{'pout': tensor([0.], device='cuda:0'), 'power': tensor([0.], device='cuda:0')}
+
+====================================================================================================
+====================================================================================================
+====================================================================================================
+
+epoch:0
+Traceback (most recent call last):
+  File "g:\CINT\Data_model_drive_direct\main\main.py", line 204, in <module>
+    train()
+  File "g:\CINT\Data_model_drive_direct\main\main.py", line 138, in train
+    pt = model_pd(Hx_dir={"Hx": x, 'edge_index': cinfo['tr']['edge_index']},
+  File "F:\Miniconda\envs\HARQ_GCN\lib\site-packages\torch\nn\modules\module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "F:\Miniconda\envs\HARQ_GCN\lib\site-packages\torch\nn\modules\module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "g:\CINT\Data_model_drive_direct\main\model.py", line 126, in forward
+    ef = torch.log10(pout[:, -1])-bounds
+RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!

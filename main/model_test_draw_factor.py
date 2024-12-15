@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from tensorboard.backend.event_processing import event_accumulator
 import seaborn as sea
 import pandas as pd
-from args import args
+from tempargs import args
 
 def getSolution(factors, NumK, PDB, modelname):
     """

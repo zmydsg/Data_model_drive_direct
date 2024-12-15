@@ -75,7 +75,7 @@ def solvePt(prefactor, pt_max, factor, NumK, ):
 #     return solution
 
 
-def equalAllocation(Pt_max, factor, NumK, rate, bounds):
+def equalAllocation(Pt_max, factor, NumK, rate, bounds, func):
     """
     等功率分配算法求解
     :param Pt_max:
@@ -95,7 +95,7 @@ def equalAllocation(Pt_max, factor, NumK, rate, bounds):
         return 
     for item in solutions:
         pt = np.ones([1,NumK])*item
-        poutList = Probabilty_outage(pt,factor,rate,NumK,flag=True)
+        poutList = Probabilty_outage(func,pt,[factor],rate,NumK,1,flag=True)
 
         # print("poutList",poutList,type(poutList))
         if(poutList[0,-1])>bounds:
@@ -114,7 +114,7 @@ def equalAllocation(Pt_max, factor, NumK, rate, bounds):
     else:
         return None,None
 
-def get_Equal_solution(factor, NumK, PDBs):
+def get_Equal_solution(factor, NumK, PDBs, func):
     """
     求解不同DB下对应的 吞吐量 及 中断概率
     :return:
@@ -127,7 +127,7 @@ def get_Equal_solution(factor, NumK, PDBs):
     throught_list2, outage_list2 = [], []
     for pdb in PDBs:
         pt_max = 10**(pdb/10)
-        result = equalAllocation(pt_max, factor, NumK, rate, bounds=Bounds[pdb])
+        result = equalAllocation(pt_max, [factor], NumK, rate,1, bounds=Bounds[pdb],func=func)
         throught_list2.append(result[0])
         outage_list2.append(result[1])
 

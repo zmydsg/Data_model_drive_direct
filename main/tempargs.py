@@ -1,7 +1,11 @@
 import argparse
-
+import os
 import numpy as np
 import torch
+
+
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+
 parser = argparse.ArgumentParser(description="paramaters of system")
 
 parser.add_argument('--epochs', type=int, default=500,

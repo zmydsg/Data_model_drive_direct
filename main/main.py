@@ -59,7 +59,7 @@ generateFilePath(model_save_path)
 
 # tensorboard 记录吞吐量变化
 writer = SummaryWriter("tensorboardLOG")
-model_name_list = ["HARQ"]
+model_name_list = ["HARQ",]
 PDBS  = [15]
 def train():
     for model_name in model_name_list:
@@ -70,8 +70,10 @@ def train():
             # 生成存储控制台输出的文件路径
             logsrecord_name = print_save_path + f'{model_name}-PDB={PDB}-Numk={NumK}-'+time.strftime("%Y-%m-%d-%H-%M-%S",
                                                                             time.localtime()) + '.log'
+            
+
             #模型保存路径
-            modelsavepath = model_save_path + f'{model_name}-NumK={NumK}-PDB={PDB}'
+            modelsavepath = model_save_path + f'{model_name}-NumK={NumK}-PDB={PDB}_model_pd_satisfy.pt'
             valpath = val_path + f'{model_name}-NumK={NumK}-PDB={PDB}'
             # 记录正常的 print 信息
             sys.stdout = Logger(logsrecord_name)
@@ -82,7 +84,7 @@ def train():
             # if not os.path.exists(model_save_path):
             #     os.makedirs(model_save_path)
 
-            bound = torch.log10(torch.tensor([Bounds[PDB]]))
+            bound = torch.log10(torch.tensor([Bounds[PDB]])).to(device)
 
             # data-process
             X, Y, cinfo = getdata(data_path,PDB, NumK, device=device, equal_flag=equal_flag)
@@ -113,7 +115,7 @@ def train():
                                        model=gcnmodel,
                                        Numk=NumK,
                                        constraints=['pout', 'power'],
-                                       device=device)
+                                       device=device).to(device)
 
             optimizer = torch.optim.Adam(gcnmodel.parameters(), lr=learning_rate)
 
@@ -137,7 +139,7 @@ def train():
                                   bounds=bound,
                                   rate=rate,
                                   numofbyte=numofbyte,
-                                  bandwidth=bandwidth)
+                                  bandwidth=bandwidth).to(device)
 
                     optimizer.zero_grad()
                     model_pd.lagr.backward()
@@ -169,34 +171,37 @@ def train():
                     writer.add_scalar(tag=f"{model_name}", scalar_value=model_pd.l_p.item(), global_step=epoch*20+i)
                     writer.add_scalar(tag=f"{model_name}-lagr", scalar_value=model_pd.lagr.item(),global_step=epoch * 20 + i)
                 
+            torch.save(model_pd, modelsavepath)
+
+            #保存val验证集的log文件
+            import pickle
+            with open(valpath+'power_vallog.pk', 'wb') as f:
+                pickle.dump(valLogs, f)
+
+            from findFuncAnswer import equalAllocation
+            equalAllocation(1000, factor, NumK, rate, bound, func=get_utility_func(model_name))
+
+            #matplot draw graph
+            x = np.linspace(start=0,stop=len(l_p_list),num=len(l_p_list))
+            plt.subplot(1,2,1)
+            plt.title(f"{model_name} epoch---delay", color='b')
+            plt.xlabel("epoch")
+            plt.ylabel("delay")
+            plt.plot(x, l_p_list)
+            
+            plt.subplot(1,2,2)
+            plt.title("epoch---Lagr", color='b')
+            plt.xlabel("epoch")
+            plt.ylabel("Lagr")
+            plt.plot(x, lagr_list)
+            
+            plt.savefig(photo_save_path+f'\\{model_name}-NumK={NumK}-PDB={PDB}-equal_flag={equal_flag}.jpg')
+            plt.show()
 
     #关闭tensorboard写入
-    # writer.close()
-
-    # equalAllocation(1000, factor, NumK, rate, bound)
-
-    # matplot draw graph
-    # x = np.linspace(start=0,stop=len(l_p_list),num=len(l_p_list))
-    # plt.subplot(1,2,1)
-    # plt.title("{model_name} epoch---delay", color='b')
-    # plt.xlabel("epoch")
-    # plt.ylabel("delay")
-    # plt.plot(x, l_p_list)
-    #
-    # plt.subplot(1,2,2)
-    # plt.title("epoch---Lagr", color='b')
-    # plt.xlabel("epoch")
-    # plt.ylabel("Lagr")
-    # plt.plot(x, lagr_list)
-    #
-    # plt.savefig(photo_save_path+f'//{model_name}-NumK={NumK}-PDB={PDB}-equal_flag={equal_flag}.jpg')
-    # plt.show()
-
-    #保存val验证集的log文件
-    # import pickle
-    # with open(valpath+'power_vallog.pk', 'wb') as f:
-    #     pickle.dump(valLogs, f)
+    writer.close()
 
 
 if __name__ =="__main__":
+    factor=0.5
     train()

@@ -12,7 +12,7 @@ from args import  args
 def draw_loss_graph():
     """
     绘制吞吐量曲线
-    :return:
+    :return: 
     """
 
     def smooth(data, x='epoch', y='delay', weight=0.6):
@@ -26,9 +26,9 @@ def draw_loss_graph():
 
         return pd.DataFrame({x: data[x].values, y: smoothed, "name": data['name']})
 
-    event1 = 'D:\pycharmproject\Data_model_drive_direct\main\\tensorboardLOG\events.out.tfevents.1682423409.JSWM-20201028YL.25668.0'
-    event2 = 'D:\pycharmproject\Data_model_drive_direct\main\\tensorboardLOG\events.out.tfevents.1682422560.JSWM-20201028YL.5408.0'
-    event3 = 'D:\pycharmproject\Data_model_drive_direct\main\\tensorboardLOG\events.out.tfevents.1682422891.JSWM-20201028YL.24448.0'
+    event1 = '.\main\\tensorboardLOG\events.out.tfevents.1682423409.JSWM-20201028YL.25668.0'
+    event2 = '.\main\\tensorboardLOG\events.out.tfevents.1682422560.JSWM-20201028YL.5408.0'
+    event3 = '.\main\\tensorboardLOG\events.out.tfevents.1682422891.JSWM-20201028YL.24448.0'
     
     ea = event_accumulator.EventAccumulator(event1)
     ea.Reload()

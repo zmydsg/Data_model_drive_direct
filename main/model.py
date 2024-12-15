@@ -144,7 +144,7 @@ class PrimalDualModel(nn.Module):
         
         return pt
 
-
+#使用给定步长 stepsizes 来更新对偶变量 lambdas[kc]，保证非负性 (使用torch.relu)。
     def update(self,  stepsizes, epoch= None, i= None):
 
         for kc in self.constraints:

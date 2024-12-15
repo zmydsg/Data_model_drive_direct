@@ -1,0 +1,17 @@
+Traceback (most recent call last):
+  File "g:\CINT\Data_model_drive_direct\main\main.py", line 204, in <module>
+    train()
+  File "g:\CINT\Data_model_drive_direct\main\main.py", line 90, in train
+    X, Y, cinfo = getdata(data_path,PDB, NumK, device=device, equal_flag=equal_flag)
+  File "g:\CINT\Data_model_drive_direct\main\utils.py", line 102, in getdata
+    x[phase], y[phase], cinfo[phase] = load_data(dpath, PDB=pdb)
+  File "g:\CINT\Data_model_drive_direct\main\utils.py", line 51, in load_data
+    with h5py.File(dpath,'r') as handle:
+  File "F:\Miniconda\envs\HARQ_GCN\lib\site-packages\h5py\_hl\files.py", line 561, in __init__
+    fid = make_fid(name, mode, userblock_size, fapl, fcpl, swmr=swmr)
+  File "F:\Miniconda\envs\HARQ_GCN\lib\site-packages\h5py\_hl\files.py", line 235, in make_fid
+    fid = h5f.open(name, flags, fapl=fapl)
+  File "h5py\\_objects.pyx", line 54, in h5py._objects.with_phil.wrapper
+  File "h5py\\_objects.pyx", line 55, in h5py._objects.with_phil.wrapper
+  File "h5py\\h5f.pyx", line 102, in h5py.h5f.open
+FileNotFoundError: [Errno 2] Unable to synchronously open file (unable to open file: name = '.\dataset\tr_inverse_direct_NumK=3.h5', errno = 2, error message = 'No such file or directory', flags = 0, o_flags = 0)
