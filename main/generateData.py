@@ -104,32 +104,72 @@ def makedata(dpath, K, dataNum, seed):
 
 #############################
 
-def makedataAccordingfactor(data_path, pdb, NumK, **kwargs):
+# def makedataAccordingfactor(data_path, pdb, NumK, **kwargs):
+#     """
+#     读取产生的数据，并将初始功率拼接上去
+#     """
+#     equal_flag = kwargs['equal_flag']
+#     test_flag = kwargs['test_flag']
+#     attach_init_power = lambda x, NumK: np.tile(np.random.dirichlet(np.ones(NumK),size=1),(int(x.shape(0),1)))*x[0,-1]
+#     attach_equal_power = lambda x, NumK: np.tile(np.ones((1,NumK)),(int(x.shape[0]),1))*(x[0,-1]/NumK)
+
+#     func_to_tensor = lambda x, pt, device:  torch.from_numpy(np.hstack([pt,x])).float().to(device)
+#     dict_to_tensor = lambda x,device:  {k:v.to(device) if isinstance(v ,torch.Tensor) else v for k ,v in x.items()}
+
+#     x ,y ,cinfo = {} , {} , {}
+
+#     phase = 'te'
+#     x[phase], y[phase], cinfo[phase] = load_data(data_path, PDB=pdb)
+
+#     if equal_flag:
+#         pt = attach_equal_power(x[phase],NumK)
+#     else:
+#         pt = attach_init_power(x[phase],NumK)
+
+#     x[phase] = func_to_tensor(x[phase], pt, kwargs['device'])
+#     y[phase] = x[phase][:,:NumK]
+#     cinfo[phase] = dict_to_tensor(cinfo[phase],kwargs['device'])
+
+#     return x , y ,cinfo
+
+        #
+        #>>修改版>>
+        #
+        #
+def makedataAccordingfactor(dpath, K, factor, PDB, device, equal_flag):
     """
-    读取产生的数据，并将初始功率拼接上去
+    根据给定的 factor 对已有数据集进行再处理。
+    比如：对加载的数据附加初始功率分配（等分或随机），并将结果转化为张量返回。
     """
-    equal_flag = kwargs['equal_flag']
-    test_flag = kwargs['test_flag']
-    attach_init_power = lambda x, NumK: np.tile(np.random.dirichlet(np.ones(NumK),size=1),(int(x.shape(0),1)))*x[0,-1]
+    # 从dpath加载数据集
+    X_raw, Y_raw, cinfo_raw = load_data(dpath, PDB=PDB)
+
+    # 定义初始功率分配函数（与getdata中一致）
+    attach_init_power = lambda x, NumK: np.tile(np.random.dirichlet(np.ones(NumK),size=1),(int(x.shape[0]),1))*x[0,-1]
     attach_equal_power = lambda x, NumK: np.tile(np.ones((1,NumK)),(int(x.shape[0]),1))*(x[0,-1]/NumK)
-    func_to_tensor = lambda x, pt, device:  torch.from_numpy(np.hstack([pt,x])).float().to(device)
-    dict_to_tensor = lambda x,device:  {k:v.to(device) if isinstance(v ,torch.Tensor) else v for k ,v in x.items()}
 
-    x ,y ,cinfo = {} , {} , {}
-
-    phase = 'te'
-    x[phase], y[phase], cinfo[phase] = load_data(data_path, PDB=pdb)
-
+    # 根据需要选择初始功率分配策略
     if equal_flag:
-        pt = attach_equal_power(x[phase],NumK)
+        pt = attach_equal_power(X_raw, K)
     else:
-        pt = attach_init_power(x[phase],NumK)
+        pt = attach_init_power(X_raw, K)
 
-    x[phase] = func_to_tensor(x[phase], pt, kwargs['device'])
-    y[phase] = x[phase][:,:NumK]
-    cinfo[phase] = dict_to_tensor(cinfo[phase],kwargs['device'])
+    # 将数据转化为tensor
+    func_to_tensor = lambda x, pt, device: torch.from_numpy(np.hstack([pt,x])).float().to(device)
+    X = func_to_tensor(X_raw, pt, device)
+    Y = X[:, :K]
 
-    return x , y ,cinfo
+    dict_to_tensor = lambda info_dict, dev: {k:v.to(dev) if isinstance(v, torch.Tensor) else v for k,v in info_dict.items()}
+    cinfo = dict_to_tensor(cinfo_raw, device)
+
+    # 如果你需要根据factor对X或pt做额外处理（如对特定factor进行过滤或扩展），可在此添加逻辑
+    # 例如，在X中增加一列factor信息（如果有需要）：
+    # factor_col = torch.full((X.shape[0], 1), factor, device=device)
+    # X = torch.cat([X, factor_col], dim=1)
+
+    return X, Y, cinfo
+
+
 
 def makefactordata(dpath, K, factor):
     print(f"dpath:{dpath}")
