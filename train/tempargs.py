@@ -32,8 +32,9 @@ parser.add_argument('--equal_flag',type= bool , default= True,
                     help="allocate power policy")
 parser.add_argument('--dropout', type=float,default=0,
                     help="dropout pro")
-parser.add_argument('--device', type=str, default="cuda" if torch.cuda.is_available() else 'cpu',
-                    help="use cpu or gpu")
+parser.add_argument('--device', type=str, 
+                    default="mps" if torch.backends.mps.is_available() else ("cuda" if torch.cuda.is_available() else 'cpu'),
+                    help="use mps, cuda or cpu")
 
 parser.add_argument('--PDB', type=int, default=15,
                    

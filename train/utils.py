@@ -98,7 +98,7 @@ def getdata(data_path, pdb, NumK, **kwargs):
     listtoprocess = ['tr']
 
     for phase in listtoprocess:
-        dpath = data_path+f'{phase}_inverse_direct_NumK={NumK}.h5'
+        dpath = os.path.join(data_path, f'{phase}_inverse_direct_Numk={NumK}.h5')
         x[phase], y[phase], cinfo[phase] = load_data(dpath, PDB=pdb)
 
         if equal_flag:
@@ -355,13 +355,3 @@ def val_test_logs(valLogs, model, valdata,modelsavepath = None,constrain = None,
         pass
 
     return valLogs
-
-
-
-
-
-            
-    
-
-
-

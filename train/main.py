@@ -2,6 +2,7 @@ import torch
 from utils import *
 from model import GCN, PrimalDualModel
 import os
+from pathlib import Path
 import matplotlib.pyplot as plt
 import time
 import warnings
@@ -26,7 +27,7 @@ rate = args.rate
 bandwidth = args.bandwidth
 numofbyte = args.numofbyte
 equal_flag = args.equal_flag
-device = args.device
+device = torch.device('cpu')  # Force using CPU
 in_size = args.in_size
 out_size = args.out_size
 inter = args.inter
@@ -39,14 +40,14 @@ decay_epoch = 100
 
 # get data_path
 # project_path = os.getcwd(),不用绝对路径，用相对路径
-project_path = ".\\"
-data_path = project_path + 'dataset/'
-train_data_name = data_path + f'tr_inverse_direct_Numk={NumK}.h5'
-test_data_name = data_path + f'te_inverse_direct_NumK={NumK}.h5'
-print_save_path = project_path + 'print_record\\'
-photo_save_path = project_path+'/train/photo/'
-model_save_path =project_path+'/train/model/'              # 保存模型的路径
-val_path = project_path+'vallog\\'
+project_path = Path(".")
+data_path = project_path / 'dataset'
+train_data_name = data_path / f'tr_inverse_direct_Numk={NumK}.h5'
+test_data_name = data_path / f'te_inverse_direct_NumK={NumK}.h5'
+print_save_path = project_path / 'print_record'
+photo_save_path = project_path / 'train' / 'photo'
+model_save_path = project_path / 'train' / 'model'              # 保存模型的路径
+val_path = project_path / 'vallog'
 
 # 判断控制台输出存取的目录是否存在
 generateFilePath(print_save_path)
@@ -70,12 +71,11 @@ def train():
             setup_seed(seed)
 
             # 生成存储控制台输出的文件路径
-            logsrecord_name = print_save_path + f'{model_name}-PDB={PDB}-Numk={NumK}-'+time.strftime("%Y-%m-%d-%H-%M-%S",
-                                                                            time.localtime()) + '.log'
+            logsrecord_name = str(print_save_path / f'{model_name}-PDB={PDB}-Numk={NumK}-{time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())}.log')
             
             #模型保存路径
-            modelsavepath = model_save_path + f'{model_name}-NumK={NumK}-PDB={PDB}_model_pd_satisfy.pt'
-            valpath = val_path + f'{model_name}-NumK={NumK}-PDB={PDB}'
+            modelsavepath = model_save_path / f'{model_name}-NumK={NumK}-PDB={PDB}_model_pd_satisfy.pt'
+            valpath = val_path / f'{model_name}-NumK={NumK}-PDB={PDB}'
             
             # 记录正常的 print 信息
             sys.stdout = Logger(logsrecord_name)
@@ -211,7 +211,7 @@ def train():
             plt.ylabel("Lagr")
             plt.plot(x, lagr_list)
             
-            plt.savefig(photo_save_path+f'\\{model_name}-NumK={NumK}-PDB={PDB}-equal_flag={equal_flag}.jpg')
+            plt.savefig(str(photo_save_path/f'{model_name}-NumK={NumK}-PDB={PDB}-equal_flag={equal_flag}.jpg'))
             plt.show()
 
     #关闭tensorboard写入
