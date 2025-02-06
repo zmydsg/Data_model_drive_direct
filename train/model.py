@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.nn import GCNConv
-import utils
+import train.utils as utils
 
 
 class BasicGcn(torch.nn.Module):
@@ -25,7 +25,7 @@ class BasicGcn(torch.nn.Module):
         for k in range(len(hidden_sizes) - 1):
             self.hidden.append(GCNConv(hidden_sizes[k], hidden_sizes[k + 1]))
 
-    def forward(self, x, edge_index, edge_weights):
+    def forward(self, x, edge_index, edge_weights):         # (13)
         for i, (hidden, activa) in enumerate(zip(self.hidden, self.activs)):
             x = hidden(x, edge_index, edge_weight=edge_weights)
             x = F.dropout(x, p=self.dp, training=self.training)
@@ -43,7 +43,7 @@ class GCN(nn.Module):
         self.ei = extra['edge_index']
         self._ei_batch = None
 
-    def forward(self, Hx, edge_index=None, **extra):
+    def forward(self, Hx, edge_index=None, **extra):        # Vl/p_k[l,nonzero], W[l,nonzero], factor[l,1], p_max[l,1]
 
         # process the index
         if edge_index is None:
@@ -53,11 +53,9 @@ class GCN(nn.Module):
         else:
             self._ei_batch = edge_index
 
-
         p_init = Hx[:, :self.size].reshape(-1, 1)
-        p_min = p_init[0]
 
-        edge_weights_batch = Hx[:, self.size:-2].reshape(-1)
+        edge_weights_batch = Hx[:, self.size:-2].reshape(-1)        # nonzero
         pt = self.model(p_init, self._ei_batch, edge_weights_batch).reshape(-1, self.size)
         
         return pt
@@ -117,17 +115,17 @@ class PrimalDualModel(nn.Module):
         l_p_1 = utils.delay_compute(throughput, numofbyte, bandwidth)
         self.delay = l_p_1.detach()
 
-        self.l_p = l_p_1.mean()
+        self.l_p = l_p_1.mean()    # tao                    (14)
 
         l_d = 0.
         # print(f"bounds:{bounds , type(bounds)}")
         for kc in self.constraints:
-            if kc == "pout":
-                ef = torch.log10(pout[:, -1])-bounds
+            if kc == "pout":        # P_out,K               (14)
+                ef = torch.log10(pout[:, -1])-bounds    # log(re)
                 self.ef1 = ef.detach()
                 self.ef[kc] = ef.mean(dim=0, keepdim=True)
                 
-            else:
+            else:                   # p_avg                 (14)
                 l_d_1 = utils.compute_p(pout, pt)
                 l_d_2 = l_d_1-pt_max
                 self.ef2 = l_d_2.detach()

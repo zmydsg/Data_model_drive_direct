@@ -1,12 +1,12 @@
 import pickle
 import numpy as np
-from train.findFuncAnswer import get_Equal_solution
+# from train.findFuncAnswer import get_Equal_solution
 import os
 import matplotlib.pyplot as plt
 from tensorboard.backend.event_processing import event_accumulator
 import seaborn as sea
 import pandas as pd
-from args import  args
+
 #   this readdata.py file contain equal allocate policy
 #   while drawGraph.py not
 def draw_loss_graph():

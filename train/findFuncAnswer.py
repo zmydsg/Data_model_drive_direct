@@ -1,10 +1,9 @@
 import sympy
-import math
 import numpy as np
 import time
 from sympy import Eq
-from args import args
-from utils import Probabilty_outage ,through_output
+from train.tempargs import args
+from train.utils import Probabilty_outage ,through_output
 
 
 def calPreFactor(factor, NumK, rate_2):
