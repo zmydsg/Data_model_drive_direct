@@ -1,6 +1,6 @@
 import torch
-from train.utils import *
-from train.model import GCN, PrimalDualModel
+from utils import *
+from model import GCN, PrimalDualModel
 import os
 import matplotlib.pyplot as plt
 import time

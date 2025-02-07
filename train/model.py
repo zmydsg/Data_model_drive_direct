@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.nn import GCNConv
-import train.utils as utils
-
+# import train.utils as utils
+import utils
 
 class BasicGcn(torch.nn.Module):
     def __init__(self, in_size, out_size, h_sizes, activs=None, dropout=0.5, **extra):
