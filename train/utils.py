@@ -8,7 +8,7 @@ import math
 from torch.utils.data import TensorDataset,DataLoader
 import sys
 import random
-from datetime import datetime
+import datetime
 
 # 控制台输出记录到文件
 class Logger(object):
