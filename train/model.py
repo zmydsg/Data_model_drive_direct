@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from torch_geometric.nn import GCNConv
 # import train.utils as utils
 import utils
-
+#shiyan
 class BasicGcn(torch.nn.Module):
     def __init__(self, in_size, out_size, h_sizes, activs=None, dropout=0.5, **extra):
         super(BasicGcn, self).__init__()
