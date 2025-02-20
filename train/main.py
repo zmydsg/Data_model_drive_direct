@@ -111,6 +111,7 @@ def train():
 
             # 动态学习率，调整learning rate大小
             lr_sch = torch.optim.lr_scheduler.StepLR(optimizer, step_size=100*20, gamma=0.4)
+            
             l_p_list = []
             lagr_list = []
 

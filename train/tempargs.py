@@ -17,7 +17,7 @@ assert os.path.exists(data_path), data_path
 
 parser = argparse.ArgumentParser(description="paramaters of system")
 
-parser.add_argument('--epochs', type=int, default=800,#1300
+parser.add_argument('--epochs', type=int, default=1300,#1300
                     help="training epoch")
 parser.add_argument('--learning_rate', type=float, default=5e-4,
                     help="adam learning rate")
