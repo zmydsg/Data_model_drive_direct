@@ -1,0 +1,10 @@
+(500, 8)
+torch.Size([500, 11])
+
+bounds:tensor([-1.], device='cuda:0')	db:10	Pt_max:10.0
+Traceback (most recent call last):
+  File "g:\CINT\Data_model_drive_direct\HARQ_MSC\train\main.py", line 531, in <module>
+    train_(False)
+  File "g:\CINT\Data_model_drive_direct\HARQ_MSC\train\main.py", line 259, in train_
+    ddpg = DDPG(NumK, 1, PDB*1.5, device='cuda').to(device)
+AttributeError: 'DDPG' object has no attribute 'to'
