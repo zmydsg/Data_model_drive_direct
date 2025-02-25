@@ -1,0 +1,19 @@
+
+bounds:-1.0	db:[10, 12, 14, 16, 18, 20, 22, 24]	Pt_max:1.0
+model init: 
+lambdas:{'pout': tensor([1.]), 'power': tensor([1.])},
+vars:{'pout': tensor([0.]), 'power': tensor([0.])}
+
+====================================================================================================
+Traceback (most recent call last):
+  File "D:\work\FC\Data_model_drive_direct-main\train\main.py", line 526, in <module>
+    train_auto_pdb(False)
+  File "D:\work\FC\Data_model_drive_direct-main\train\main.py", line 430, in train_auto_pdb
+    x[:, -1] = pdbs[torch.randint(0, pdbs.shape[0], x.shape[0], dtype=torch.int16)]
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: randint() received an invalid combination of arguments - got (int, int, int, dtype=torch.dtype), but expected one of:
+ * (int high, tuple of ints size, *, torch.Generator generator, Tensor out, torch.dtype dtype, torch.layout layout, torch.device device, bool pin_memory, bool requires_grad)
+ * (int high, tuple of ints size, *, Tensor out, torch.dtype dtype, torch.layout layout, torch.device device, bool pin_memory, bool requires_grad)
+ * (int low, int high, tuple of ints size, *, torch.Generator generator, Tensor out, torch.dtype dtype, torch.layout layout, torch.device device, bool pin_memory, bool requires_grad)
+ * (int low, int high, tuple of ints size, *, Tensor out, torch.dtype dtype, torch.layout layout, torch.device device, bool pin_memory, bool requires_grad)
+

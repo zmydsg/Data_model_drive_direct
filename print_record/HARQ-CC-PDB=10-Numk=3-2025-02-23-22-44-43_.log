@@ -1,0 +1,17 @@
+(500, 8)
+torch.Size([500, 11])
+
+bounds:tensor([-1.], device='cuda:0')	db:10	Pt_max:10.0
+====================================================================================================
+
+epoch:0
+Traceback (most recent call last):
+  File "g:\CINT\Data_model_drive_direct\HARQ_MSC\train\main.py", line 537, in <module>
+    train_(False)
+  File "g:\CINT\Data_model_drive_direct\HARQ_MSC\train\main.py", line 291, in train_
+    model_pd.train()
+  File "F:\Miniconda\envs\HARQ_GCN\lib\site-packages\torch\nn\modules\module.py", line 2846, in train
+    module.train(mode)
+  File "g:\CINT\Data_model_drive_direct\HARQ_MSC\train\model.py", line 308, in train
+    x, y, u, r, d = replay_buffer.sample(batch_size)
+AttributeError: 'bool' object has no attribute 'sample'

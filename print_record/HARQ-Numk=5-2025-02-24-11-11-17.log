@@ -1,0 +1,28 @@
+
+bounds:-1.0	db:[10, 12, 14, 16, 18, 20, 22, 24]	Pt_max:1.0
+model init: 
+lambdas:{'pout': tensor([1.]), 'power': tensor([1.])},
+vars:{'pout': tensor([0.]), 'power': tensor([0.])}
+
+====================================================================================================
+
+training epoch:0
+ l_p: -0.05370457097887993  l_d: 189.24295043945312  lagr: 189.18923950195312
+Traceback (most recent call last):
+  File "c:\Users\ghhg\Documents\CINT\Data_model_drive_direct--\train\main.py", line 262, in <module>
+    train_auto_pdb(False)
+  File "c:\Users\ghhg\Documents\CINT\Data_model_drive_direct--\train\main.py", line 179, in train_auto_pdb
+    df = pd.DataFrame(pout_data)
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ghhg\AppData\Roaming\Python\Python312\site-packages\pandas\core\frame.py", line 778, in __init__
+    mgr = dict_to_mgr(data, index, columns, dtype=dtype, copy=copy, typ=manager)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ghhg\AppData\Roaming\Python\Python312\site-packages\pandas\core\internals\construction.py", line 503, in dict_to_mgr
+    return arrays_to_mgr(arrays, columns, index, dtype=dtype, typ=typ, consolidate=copy)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ghhg\AppData\Roaming\Python\Python312\site-packages\pandas\core\internals\construction.py", line 114, in arrays_to_mgr
+    index = _extract_index(arrays)
+            ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ghhg\AppData\Roaming\Python\Python312\site-packages\pandas\core\internals\construction.py", line 677, in _extract_index
+    raise ValueError("All arrays must be of the same length")
+ValueError: All arrays must be of the same length
