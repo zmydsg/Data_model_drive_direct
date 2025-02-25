@@ -5,7 +5,7 @@ from torch_geometric.nn import GCNConv
 import train.utils as utils
 import torch.optim as optim
 import numpy as np
-from train.generateData import generate1
+from generateData import *
 from torch_geometric.utils import dense_to_sparse
 
 class BasicGcn(torch.nn.Module):

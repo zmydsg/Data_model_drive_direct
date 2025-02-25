@@ -1,5 +1,5 @@
 
-from train.tempargs import  *
+from tempargs import  *
 import os
 
 equal_flag = args.equal_flag
