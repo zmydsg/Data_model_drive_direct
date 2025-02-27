@@ -1,24 +1,19 @@
-import numpy
-import torch
-from tempargs import  args
+
+from train.tempargs import  *
 import os
-import numpy as np
-import h5py
-from utils import getdata,load_data
 
 equal_flag = args.equal_flag
 NumK = args.NumK
 trainSeed= args.train_seed
 valSeed = args.val_seed
-device = args.device
 
 # get data_path
-# project_path = os.getcwd()
-project_path = ".\\"
-data_path = project_path + 'dataset\\'
 train_data_name = data_path + f'tr_inverse_direct_Numk={NumK}.h5'
 val_data_name = data_path +f'val_inverse_direct_Numk={NumK}.h5'
-
+import numpy as np
+import h5py
+from train.utils import getdata,load_data
+import torch
 
 #非对角元素为factor^(i+j)
 def generate1example(factor,K,x):
@@ -44,7 +39,7 @@ def generate1example(factor,K,x):
 
 
 #上三角矩阵
-def generate1DirectExample(factor,K,x):
+def generate1DirectExample(factor,K,x):                 # (12)
     """
     #产生有向图模型
     """
@@ -171,8 +166,10 @@ def makedataAccordingfactor(dpath, K, factor, PDB, device, equal_flag):
 
 
 
-def makefactordata(dpath, K, factor):
+def makefactordata(dpath, K, factor, replace=False):
     print(f"dpath:{dpath}")
+    if replace and os.path.isfile(dpath):
+        os.remove(dpath)
     with h5py.File(dpath,'w-')as f:
         g = f.create_group('input')
         dset = g.create_dataset('channel',(1,K**2+1),dtype = np.float32)
@@ -189,22 +186,24 @@ def makefactordata(dpath, K, factor):
 ####################################################
 
 # 判断读取数据是否存在
-def generateDataSet(dataname, dataNum, seed):
+def generateDataSet(dataname, dataNum, seed, replace=False):
     """
     #### 此部分为生成路径选项
     """
     print(f"dataname:{dataname}")
-    if not os.path.exists(dataname):
-        print("文件不存在，正在生成")
+    if replace or not os.path.exists(dataname):
+        if not replace: print("文件不存在，正在生成")
+        elif os.path.isfile(dataname):
+            os.remove(dataname)
         makedata(dpath=dataname, K=NumK, dataNum=dataNum, seed= seed)
     else:
         print("Continue")
         pass
 
 if __name__=='__main__':
-    
-    factor = 0.98
-    factor_test_data = data_path + f'te_factor={factor}_NumK={NumK}.h5'
-    # makefactordata(factor_test_data, K=NumK, factor=factor)
-    # generateDataSet(train_data_name, 50, args.train_seed)
-    generateDataSet(val_data_name, 100, args.val_seed)
+
+    generateDataSet(train_data_name, 500, args.train_seed, replace=True)#500
+    generateDataSet(val_data_name, 200, args.val_seed, replace=True)
+    for factor in args.factors:             # alpha $random     (2)
+        factor_test_data = data_path + f'te_factor={factor}_NumK={NumK}.h5'
+        makefactordata(factor_test_data, K=NumK, factor=factor, replace=True)
