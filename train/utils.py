@@ -1,6 +1,6 @@
 import numpy as np
 import h5py
-from prettytable import PrettyTable
+# from prettytable import PrettyTable
 from torch_geometric.utils import dense_to_sparse
 import os
 import torch
@@ -8,8 +8,7 @@ import math
 from torch.utils.data import TensorDataset,DataLoader
 import sys
 import random
-import builtins as __builtin__
-from datetime import datetime
+import datetime
 
 # 控制台输出记录到文件
 class Logger(object):
@@ -50,7 +49,7 @@ def load_data(dpath, **kwargs):
 
     with h5py.File(dpath,'r') as handle:
         
-        hs = handle['input']['channel']
+        hs = handle['input']['channel']         # dest [N,numK * (numK:x+1:factor)]
         datanum1,datanum2 = hs.shape
         reshapesize = int(np.power(datanum2-1,0.5))
 
@@ -60,10 +59,10 @@ def load_data(dpath, **kwargs):
 
             edge_index,h = dense_to_sparse(torch.from_numpy(hs[index,0:-1].reshape(reshapesize,reshapesize).astype(float)))
 
-            x1 = np.hstack([h,factor,pin]).reshape(-1,1).T
+            x1 = np.hstack([h,factor,pin]).reshape(-1,1).T      # [[nonzero=K*(K+1)/2+1+1:p_in]]
             X.append(x1)
         cinfo={
-            'edge_index':edge_index
+            'edge_index':edge_index             # (13)  D(H)^-1/2@H@D(H)^1/2 [1:y+1:x,nonzero]
         }
     X = np.concatenate((X))
     X = X[~np.any(np.isnan(X),-1)]
@@ -106,7 +105,7 @@ def getdata(data_path, pdb, NumK, **kwargs):
         else:
             pt = attach_init_power(x[phase],NumK)
 
-        x[phase] = func_to_tensor(x[phase], pt, kwargs['device'])
+        x[phase] = func_to_tensor(x[phase], pt, kwargs['device'])       # [p_in+nonzero+factor+p_init_max]
         y[phase] = x[phase][:,:NumK]
         cinfo[phase] = dict_to_tensor(cinfo[phase],kwargs['device'])
 
@@ -148,7 +147,8 @@ def getfactordata(datapath, pdb, NumK, **kwargs):
 
 def edge_index_batch(edgeindex, numhx, NumK, dev):
     #有向图
-    listshift = torch.vstack([torch.arange(numhx) * NumK, ] * (int(NumK*(NumK+1)/2))).T.reshape(-1).repeat(1, 2).view(2, -1).long().to(dev)
+    # listshift = torch.vstack([torch.arange(numhx) * NumK, ] * (int(NumK*(NumK+1)/2))).T.reshape(-1).repeat(1, 2).view(2, -1).long().to(dev)
+    listshift = torch.arange(0, numhx*NumK, NumK)[:, None].long().repeat(2, 1, NumK*(NumK+1)//2).view(2, -1).to(dev)
     #无向图
     # listshift = torch.vstack([torch.arange(numhx) * NumK, ] *NumK**2).T.reshape(-1).repeat(1,2).view(2, -1).long().to(dev)
     edgeindex_batch = edgeindex.repeat(1, numhx) + listshift
@@ -265,7 +265,7 @@ def get_utility_func(m):
     }
     return func_dict[m]
 
-def Probabilty_outage(outage_cal_func, pt, factors, rate, NumK, NumE, flag = None):
+def Probabilty_outage(outage_cal_func, pt, factors, rate, NumK, NumE, flag = None):     # (8)
 
     rate_2 = 2**rate
     if not flag:
@@ -280,7 +280,7 @@ def Probabilty_outage(outage_cal_func, pt, factors, rate, NumK, NumE, flag = Non
     # return torch.clamp(result, min= 1e-12, max=torch.tensor(1))
 
 
-def compute_p(pout, pt):
+def compute_p(pout, pt):                                # (7)
     middle1 = pt[:,1:]
     middle2 = pout[:,0:-1]
     middle3 = (middle1*middle2).sum(dim=1,keepdim=True)
@@ -288,7 +288,7 @@ def compute_p(pout, pt):
     return pt1+middle3
 
 
-def through_output(pout , rate ,NumK, flag =None):
+def through_output(pout , rate ,NumK, flag =None):      # (5)
     ### numpy 跟pyotrch中对于数组形状操作的函数是不一样的
     if not flag:
         up = rate * (1-pout[:,-1]).view(-1,1)
@@ -299,7 +299,7 @@ def through_output(pout , rate ,NumK, flag =None):
 
     return up/down
 
-def delay_compute(throughput, numofbyte, bandwith):
+def delay_compute(throughput, numofbyte, bandwith):     # (4)
     mid = throughput* bandwith
     res = numofbyte/ mid
     return res

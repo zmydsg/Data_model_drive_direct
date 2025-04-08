@@ -1,12 +1,12 @@
 import pickle
 import numpy as np
-from train.findFuncAnswer import get_Equal_solution
+# from train.findFuncAnswer import get_Equal_solution
 import os
 import matplotlib.pyplot as plt
 from tensorboard.backend.event_processing import event_accumulator
 import seaborn as sea
 import pandas as pd
-from args import  args
+
 #   this readdata.py file contain equal allocate policy
 #   while drawGraph.py not
 def draw_loss_graph():
@@ -26,10 +26,16 @@ def draw_loss_graph():
 
         return pd.DataFrame({x: data[x].values, y: smoothed, "name": data['name']})
 
-    event1 = '.\main\\tensorboardLOG\events.out.tfevents.1682423409.JSWM-20201028YL.25668.0'
-    event2 = '.\main\\tensorboardLOG\events.out.tfevents.1682422560.JSWM-20201028YL.5408.0'
-    event3 = '.\main\\tensorboardLOG\events.out.tfevents.1682422891.JSWM-20201028YL.24448.0'
-    
+    # event1 = 'train\tensorboardLOG\events.out.tfevents.1738766051.MIRAGE.9716.0'
+    # event2 = 'train\tensorboardLOG\events.out.tfevents.1738809060.MIRAGE.15652.0'
+    # event3 = 'train\tensorboardLOG\events.out.tfevents.1738809513.MIRAGE.22540.0'
+    event1 = os.path.join(os.getcwd(), 'train', 'tensorboardLOG', 'events.out.tfevents.1738766051.MIRAGE.9716.0')
+    event2 = os.path.join(os.getcwd(), 'train', 'tensorboardLOG', 'events.out.tfevents.1738809060.MIRAGE.15652.0')
+    event3 = os.path.join(os.getcwd(), 'train', 'tensorboardLOG', 'events.out.tfevents.1738809513.MIRAGE.22540.0')
+
+    if not os.path.exists(event1):
+        print(f"文件不存在: {event1}")
+
     ea = event_accumulator.EventAccumulator(event1)
     ea.Reload()
     df1_train_loss = ea.scalars.Items('HARQ')

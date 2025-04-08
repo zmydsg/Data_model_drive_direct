@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import time
 import warnings
 from torch_geometric.utils import is_undirected
-from tempargs import args
+from tempargs import *
 import random
 from torch.utils.tensorboard import SummaryWriter
 warnings.filterwarnings('ignore')
@@ -26,7 +26,7 @@ rate = args.rate
 bandwidth = args.bandwidth
 numofbyte = args.numofbyte
 equal_flag = args.equal_flag
-device = args.device
+device = args.device()
 in_size = args.in_size
 out_size = args.out_size
 inter = args.inter
@@ -35,18 +35,10 @@ inter = args.inter
 # dual element update stepsize
 update_Step = {"pout": learning_rate2, "power": learning_rate3}
 
-decay_epoch = 100
-
 # get data_path
 # project_path = os.getcwd(),不用绝对路径，用相对路径
-project_path = ".\\"
-data_path = project_path + 'dataset/'
 train_data_name = data_path + f'tr_inverse_direct_Numk={NumK}.h5'
 test_data_name = data_path + f'te_inverse_direct_NumK={NumK}.h5'
-print_save_path = project_path + 'print_record\\'
-photo_save_path = project_path+'/train/photo/'
-model_save_path =project_path+'/train/model/'              # 保存模型的路径
-val_path = project_path+'vallog\\'
 
 # 判断控制台输出存取的目录是否存在
 generateFilePath(print_save_path)
@@ -54,10 +46,10 @@ generateFilePath(print_save_path)
 generateFilePath(photo_save_path)
 # 判断保存模型数据的路径是否存在
 generateFilePath(model_save_path)
-
+generateFilePath(tensorlog_save_path)
 
 # tensorboard 记录吞吐量变化
-writer = SummaryWriter("./train/tensorboardLOG")
+writer = SummaryWriter(tensorlog_save_path)
 
 model_name_list = ["HARQ","HARQ-CC","HARQ-IR"]
 
@@ -119,56 +111,64 @@ def train():
 
             # 动态学习率，调整learning rate大小
             lr_sch = torch.optim.lr_scheduler.StepLR(optimizer, step_size=100*20, gamma=0.4)
+            
             l_p_list = []
             lagr_list = []
 
-            # training
-            for epoch in range(epochs):
-                print("=" * 100)
-                print("=" * 100)
-                print("=" * 100)
-                print(f"\nepoch:{epoch}")
+            try:
+                # training
+                for epoch in range(epochs):
+                    print("=" * 100)
+                    print("=" * 100)
+                    print("=" * 100)
+                    print(f"\nepoch:{epoch}")
 
-                # epoch_lp = 0
-                for i, (x, _) in enumerate(dataloader):
-                    # print(f"i:{i}")
-                    model_pd.train()
-                    pt = model_pd(Hx_dir={"Hx": x, 'edge_index': cinfo['tr']['edge_index']},
-                                  bounds=bound,
-                                  rate=rate,
-                                  numofbyte=numofbyte,
-                                  bandwidth=bandwidth).to(device)
+                    # epoch_lp = 0
+                    for i, (x, _) in enumerate(dataloader):
+                        # print(f"i:{i}")
+                        model_pd.train()
+                        pt = model_pd(Hx_dir={"Hx": x, 'edge_index': cinfo['tr']['edge_index']},
+                                      bounds=bound,
+                                      rate=rate,
+                                      numofbyte=numofbyte,
+                                      bandwidth=bandwidth).to(device)
 
-                    optimizer.zero_grad()
-                    model_pd.lagr.backward()
+                        optimizer.zero_grad()
+                        model_pd.lagr.backward()
 
-                    torch.nn.utils.clip_grad_norm_(model_pd.parameters(), 3)
-                    optimizer.step()
-                    model_pd.update(update_Step, epoch, i,)
-                    lr_sch.step()
+                        torch.nn.utils.clip_grad_norm_(model_pd.parameters(), 3)
+                        optimizer.step()
+                        model_pd.update(update_Step, epoch, i,)
+                        lr_sch.step()
 
-                    # 存取训练中变化
+                        # 存取训练中变化
 
-                    # epoch_lp += model_pd.l_p.item()
-                    if not i%20:
-                        print("**" * 20)
-                        print(f"forward func Hx:{x[0:4, :]}\n pt:{pt[0:4, :]}")
-                        l_p_list.append(model_pd.l_p.mean().item())
-                        lagr_list.append(model_pd.lagr.mean().item())
-                        print(f'\ntraining epoch:{epoch}, step:{i}',
-                              "\nmodel_pd.l_p.mean():", model_pd.l_p.mean().item(),
-                              "\nmodel_pd.l_d.mean():", model_pd.l_d.mean().item(),
-                              "\nmodel_pd.lagr.mean():", model_pd.lagr.mean().item(),
-                              "\nmodel_pd.lambdas:", model_pd.lambdas.items(),
-                              "\nmodel_pd.vars:",model_pd.vars.items(),
-                              # "\nmodel_pd.ef:", model_pd.ef.items(),
-                              # "\nmodel_pd.throughput.item()",model_pd.throughput.data,
-                              # "\nmodel_pd.temp_dict:", model_pd.temp_dict,
-                              )
-                    print(f"epoch：{epoch}\t i:{i} \t global-step:{epoch*20+i}\t l-p:{model_pd.l_p.item()}")
-                    writer.add_scalar(tag=f"{model_name}-l_p", scalar_value=model_pd.l_p.item(), global_step=epoch*20+i)
-                    writer.add_scalar(tag=f"{model_name}-lagr", scalar_value=model_pd.lagr.item(),global_step=epoch * 20 + i)
-                
+                        # epoch_lp += model_pd.l_p.item()
+                        if not i%20:
+                            print("**" * 20)
+                            print(f"forward func Hx:{x[0:4, :]}\n pt:{pt[0:4, :]}")
+                            l_p_list.append(model_pd.l_p.mean().item())
+                            lagr_list.append(model_pd.lagr.mean().item())
+                            print(f'\ntraining epoch:{epoch}, step:{i}',
+                                  "\nmodel_pd.l_p.mean():", model_pd.l_p.mean().item(),
+                                  "\nmodel_pd.l_d.mean():", model_pd.l_d.mean().item(),
+                                  "\nmodel_pd.lagr.mean():", model_pd.lagr.mean().item(),
+                                  "\nmodel_pd.lambdas:", model_pd.lambdas.items(),
+                                  "\nmodel_pd.vars:",model_pd.vars.items(),
+                                  # "\nmodel_pd.ef:", model_pd.ef.items(),
+                                  # "\nmodel_pd.throughput.item()",model_pd.throughput.data,
+                                  # "\nmodel_pd.temp_dict:", model_pd.temp_dict,
+                                  )
+                        print(f"epoch：{epoch}\t i:{i} \t global-step:{epoch*20+i}\t l-p:{model_pd.l_p.item()}")
+                        writer.add_scalar(tag=f"{model_name}-l_p", scalar_value=model_pd.l_p.item(), global_step=epoch*20+i)
+                        writer.add_scalar(tag=f"{model_name}-lagr", scalar_value=model_pd.lagr.item(),global_step=epoch * 20 + i)
+            except KeyboardInterrupt:
+                i = input('Save?').lower()
+                if i == 't':
+                    torch.save(model_pd, modelsavepath)
+                    break
+                elif i == 'f':
+                    break
             torch.save(model_pd, modelsavepath)
 
             # # 验证部分
@@ -199,11 +199,14 @@ def train():
 
             #matplot draw graph
             x = np.linspace(start=0,stop=len(l_p_list),num=len(l_p_list))
+            plt.figure(figsize=(16, 8))
             plt.subplot(1,2,1)
             plt.title(f"{model_name} epoch---delay", color='b')
             plt.xlabel("epoch")
             plt.ylabel("delay")
             plt.plot(x, l_p_list)
+            if any(delay > 1. for delay in l_p_list):
+                plt.ylim(0, 1.)
             
             plt.subplot(1,2,2)
             plt.title("epoch---Lagr", color='b')

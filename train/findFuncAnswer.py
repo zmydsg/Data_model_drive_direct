@@ -1,9 +1,8 @@
 import sympy
-import math
 import numpy as np
 import time
 from sympy import Eq
-from args import args
+from tempargs import args
 from utils import Probabilty_outage ,through_output
 
 
